@@ -1,0 +1,52 @@
+---
+title: "Exercise Prediction"
+output: html_document
+---
+
+
+## Data Loading and Cleaning
+```{r}
+require(randomForest)
+traindfraw <- read.csv("pml-training.csv", header = TRUE, na.strings = c("NA", ""))
+testdfraw <- read.csv("pml-testing.csv", header = TRUE, na.strings = c("NA", ""))
+```
+
+
+Let's calculate the percentage of cells missing for each column.
+```{r}
+numobs <- nrow(traindfraw)
+pctmissing <- sapply(traindfraw, function(x) sum(is.na(x))/numobs)
+table(pctmissing)
+```
+Many features seem to be largely missing (many features are NA around 98% of the time). We can forget these features. We also want to lose timestamp features (do not want to make this a time series thing). We also remove "X" which is just a row number and the window variables which give no insight in the movement of the exercise. All that remains are what we want: physical measurements of exercise movement.
+
+```{r}
+traindf <- traindfraw[,pctmissing<.96]
+traindf <- traindf[,!(colnames(traindf) %in% c("X", "raw_timestamp_part_1", "raw_timestamp_part_2", "cvtd_timestamp", "new_window", "num_window"))]
+
+testdf <- testdfraw[,pctmissing<.96]
+testdf <- testdf[,!(colnames(testdf) %in% c("X", "raw_timestamp_part_1", "raw_timestamp_part_2", "cvtd_timestamp", "new_window", "num_window"))]
+
+```
+
+## Model Creation
+
+We create a random forests model which predicts the class from the variables that have not been dropped.
+
+```{r}
+set.seed(6863)
+themodel <- randomForest(traindf[,!(colnames(traindf) %in% c("classe"))], traindf[,"classe"], importance=T)
+```
+
+Now let's look at the confusion matrix and OOB estimate of the error rate.
+```{r}
+print(themodel)
+```
+
+It appears that our model will perform quite well on the test set: the estimate of the error rate is 0.26% which is very low.
+
+We can also plot variable importance (not part of the assignment, just interested).
+
+```{r}
+varImpPlot(themodel)
+```
