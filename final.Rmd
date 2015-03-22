@@ -45,6 +45,8 @@ print(themodel)
 
 It appears that our model will perform quite well on the test set: the estimate of the error rate is 0.26% which is very low.
 
+Note that because we use random forests, there is no need to separately perform cross-validation. The error rate reported is unbiased (constructed while fitting the model using observations that are not being utilized in the current tree).
+
 We can also plot variable importance (not part of the assignment, just interested).
 
 ```{r}
